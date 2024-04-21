@@ -43,7 +43,7 @@ function Header() {
     useEffect(() => {
         const getMyAvatar = async () => {
             if (user && user.user) {
-                const { data, error } = await getAvatar(user.user._id, user.token);
+                const { data, error } = await getAvatar(user.user._id);
                 if (!error) {
                     try {
                         setProfileAvatar(URL.createObjectURL(data));
@@ -77,7 +77,7 @@ function Header() {
     const handleLogout = async (all = false) => {
         // return dispatch(updateAuth({}));
         dispatch(updateLoaderState(true));
-        const { data, error } = await logout(user.token, all);
+        const { data, error } = await logout(all);
 
         if (data) {
             dispatch(updateAuth({}));
@@ -118,14 +118,14 @@ function Header() {
                     >
                         Task Manager
                     </Typography>
-                    <Tooltip 
+                    {/* <Tooltip 
                         title={latestRelease.description}
                     >
                         <Typography
                             className={styles.version}
                             fontWeight="bold"
                         >v{latestRelease.version}</Typography>
-                    </Tooltip>
+                    </Tooltip> */}
                 </Toolbar>
                 <Toolbar className={styles.navItems}>
                     {
@@ -133,33 +133,21 @@ function Header() {
                             <>
                                 { 
                                     pageContentState.page !== 'projects' ?
-                                        <Tooltip
-                                            title="Projects"
-                                            arrow
+                                        <div 
+                                            onClick={() => dispatch(updatePageContentState({ page: 'projects' }))} 
+                                            className={styles.navItem}
                                         >
-                                            <IconButton 
-                                                onClick={() => dispatch(updatePageContentState({ page: 'projects' }))}
-                                            >
-                                                <AccountTreeIcon 
-                                                    className={styles.iconBtn}
-                                                />
-                                            </IconButton>
-                                        </Tooltip> : ''
+                                            Projects
+                                        </div> : ''
                                 }
                                 { 
                                     pageContentState.page !== 'access-requests' ? 
-                                        <Tooltip
-                                            title="Access Requests"
-                                            arrow
+                                        <div 
+                                            onClick={() => dispatch(updatePageContentState({ page: 'access-requests' }))}
+                                            className={styles.navItem}    
                                         >
-                                            <IconButton
-                                                onClick={() => dispatch(updatePageContentState({ page: 'access-requests' }))}
-                                            >
-                                                <PlaylistAddIcon 
-                                                    className={styles.iconBtn}
-                                                />
-                                            </IconButton>
-                                        </Tooltip> : ''
+                                            Access Requests
+                                        </div> : ''
                                 }
                                 <Tooltip 
                                     title={`${user.user.name} (${user.user._id.toUpperCase()})`}

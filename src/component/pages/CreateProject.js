@@ -5,9 +5,10 @@ import { createProjectStyles } from '../../styles/CreateProject.style';
 import { FormUtil, Form } from '../shared/Formutil';
 import { updateNotificationState } from '../../state-management/actions/Notification.actions';
 import { createProject } from '../../service/project.service';
+import { updatePopUpState } from '../../state-management/actions/PopUp.actions';
 import Controls from '../controls/Controls';
 
-function CreateProject() {
+function CreateProject({ cb }) {
 
     const styles = createProjectStyles();
 
@@ -33,7 +34,7 @@ function CreateProject() {
     const handleSubmit = async (e) => {
         setLoading(true);
         e.preventDefault();
-        const { data, error } = await createProject(user.token, values);
+        const { data, error } = await createProject(values);
         if (data) {
             dispatch(updateNotificationState({
                 isOpen: true,
@@ -54,6 +55,8 @@ function CreateProject() {
             }));
         }
         setLoading(false);
+        cb();
+        dispatch(updatePopUpState({ createProject: false }));
     }
 
     return (

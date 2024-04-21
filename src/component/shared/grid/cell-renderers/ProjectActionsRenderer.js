@@ -24,7 +24,7 @@ function ProjectActionsRenderer(params) {
         const { data, error } = await raiseAccessRequest({
             project: project._id,
             accessRequestedFor: user.user._id
-        }, user.token);
+        });
         if (error) {
             dispatch(updateNotificationState({
                 isOpen: true,
@@ -39,6 +39,7 @@ function ProjectActionsRenderer(params) {
             }));
         }
         setLoading(false);
+        params.cb();
     }
 
     return (
@@ -77,6 +78,7 @@ function ProjectActionsRenderer(params) {
             >
                 <EditProject 
                     project={params.data.project}
+                    cb={params.cb}
                 />
             </Popup>
         </>

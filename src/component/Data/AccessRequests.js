@@ -11,11 +11,13 @@ import { accessRequestsStyles } from '../../styles/AccessRequests.style';
 import { getAccessRequests } from '../../service/access-request.service';
 import { defaultModules, defaultFrameworkComponents, defaultColDef, defaultGridOptions } from '../shared/grid/defaults';
 import AccessRequestActionsRenderer from '../shared/grid/cell-renderers/AccessRequestActionsRenderer';
+import UserIDRenderer from '../shared/grid/cell-renderers/UserIDRenderer';
 import { userIDFormatter } from '../shared/grid/formatters';
 import { updateAuth } from '../../state-management/actions/Auth.actions';
 import { updateNotificationState } from '../../state-management/actions/Notification.actions';
 import { updatePopUpState } from '../../state-management/actions/PopUp.actions';
 import { accessRequestStatusStyler } from '../shared/grid/cellStyles';
+import { reloadUsersState } from '../../state-management/storeUtils';
 import CreateAccessRequest from '../pages/CreateAccessRequest';
 import Popup from '../shared/Popup';
 import Controls from '../controls/Controls';
@@ -31,8 +33,18 @@ function AccessRequests() {
     const user = useSelector(state => state.auth);
     const popUpState = useSelector(state => state.popUp);
 
-    const getAllAccessRequests = async () => {
-        let { data, error } = await getAccessRequests(user.token);
+    const updateUsersState = requests => {
+        const ids = new Set();
+        requests.forEach(request => {
+            ids.add(request.project.owner);
+            ids.add(request.accessRequestedFor._id);
+            ids.add(request.applicant);
+        });
+        reloadUsersState([ ...ids ]);
+    }
+
+    const getAllAccessRequests = async (alreadyRendered = false) => {
+        let { data, error } = await getAccessRequests();
         if (error) {
             if (error.status === 408) {
                 dispatch(updateNotificationState({
@@ -52,12 +64,14 @@ function AccessRequests() {
             }));
         } else {
             setRowData(data || []);
+            updateUsersState(data || []);
         }
     }
 
     const frameworkComponents = {
         ...defaultFrameworkComponents,
-        accessRequestActionsRenderer: AccessRequestActionsRenderer
+        accessRequestActionsRenderer: AccessRequestActionsRenderer,
+        userIDRenderer: UserIDRenderer
     };
 
     const columnDefs = useMemo(() => [
@@ -81,20 +95,29 @@ function AccessRequests() {
         {
             field: 'project.owner',
             headerName: 'Project Admin',
-            valueFormatter: userIDFormatter,
-            filter: 'agSetColumnFilter'
+            cellRenderer: 'userIDRenderer',
+            filter: 'agSetColumnFilter',
+            filterParams: {
+                valueFormatter: userIDFormatter
+            }
         },
         {
             field: 'accessRequestedFor._id',
             headerName: 'Requested For',
-            valueFormatter: userIDFormatter,
-            filter: 'agSetColumnFilter'
+            cellRenderer: 'userIDRenderer',
+            filter: 'agSetColumnFilter',
+            filterParams: {
+                valueFormatter: userIDFormatter
+            }
         },
         {
             field: 'applicant',
             headerName: 'Raised By',
-            valueFormatter: userIDFormatter,
-            filter: 'agSetColumnFilter'
+            cellRenderer: 'userIDRenderer',
+            filter: 'agSetColumnFilter',
+            filterParams: {
+                valueFormatter: userIDFormatter
+            }
         },
         {
             field: 'status',
@@ -104,6 +127,9 @@ function AccessRequests() {
         },
         {
             cellRenderer: 'accessRequestActionsRenderer',
+            cellRendererParams: {
+                cb: getAllAccessRequests
+            },
             width: 180,
             filter: false,
             sortable: false
@@ -160,7 +186,9 @@ function AccessRequests() {
                 onClose={() => dispatch(updatePopUpState({ createAccessRequest: false }))}
                 showCloseBtn={true}
             >
-                <CreateAccessRequest />
+                <CreateAccessRequest 
+                    cb={getAllAccessRequests}
+                />
             </Popup>
         </>
     )

@@ -11,8 +11,9 @@ import { getProjects } from '../../service/project.service';
 import Controls from '../controls/Controls';
 import { getUsers } from '../../service/user.service';
 import { USER_LABEL_REGEX, PROJECT_LABEL_REGEX } from '../../utils/const';
+import { updatePopUpState } from '../../state-management/actions/PopUp.actions';
 
-function CreateAccessRequest() {
+function CreateAccessRequest({ cb }) {
 
     const styles = createAccessRequestStyles();
 
@@ -26,6 +27,7 @@ function CreateAccessRequest() {
         requestor: false,
         project: false
     });
+    const [requestorInputFieldValue, setRequestorInputFieldValue] = useState('');
     const [users, setUsers] = useState([]);
     const [projects, setProjects] = useState([]);
     const optionsLoading = {
@@ -49,11 +51,11 @@ function CreateAccessRequest() {
     useEffect(() => {
         let active = true;
 
-        if (!optionsLoading.requestor)
+        if (!optionsLoading.requestor && requestorInputFieldValue === '')
             return undefined;
 
         (async () => {
-            const { data, error } = await getUsers(user.token);
+            const { data, error } = await getUsers(requestorInputFieldValue);
 
             if (!error && data) {
                 if (active) {
@@ -65,7 +67,7 @@ function CreateAccessRequest() {
         return () => {
             active = false;
         }
-    }, [optionsLoading.requestor]);
+    }, [optionsLoading.requestor, requestorInputFieldValue]);
 
     useEffect(() => {
         if (!optionsOpen.requestor)
@@ -79,7 +81,7 @@ function CreateAccessRequest() {
             return undefined;
 
         (async () => {
-            const { data, error } = await getProjects(user.token);
+            const { data, error } = await getProjects();
 
             if (!error && data) {
                 if (active) {
@@ -101,8 +103,7 @@ function CreateAccessRequest() {
     const handleSubmit = async (e) => {
         setLoading(true);
         e.preventDefault();
-        console.log(values);
-        const { data, error } = await raiseAccessRequest(values, user.token);
+        const { data, error } = await raiseAccessRequest(values);
         if (data) {
             dispatch(updateNotificationState({
                 isOpen: true,
@@ -117,26 +118,30 @@ function CreateAccessRequest() {
             }));
         }
         setLoading(false);
+        cb();
+        dispatch(updatePopUpState({ createAccessRequest: false }));
     }
 
-    const handleRequestorChange = e => {
-        const label = e.target.innerHTML.toLowerCase();
-        const matches = label.match(USER_LABEL_REGEX);
-        if (matches.length === 3)
-            setValues({
-                ...values,
-                accessRequestedFor: matches[2]
-            });
+    const handleRequestorChange = (e, newVal) => {
+        setValues({
+            ...values,
+            accessRequestedFor: newVal?._id || ''
+        });
     }
 
-    const handleProjectChange = e => {
-        const label = e.target.innerHTML.toLowerCase();
-        const matches = label.match(PROJECT_LABEL_REGEX);
-        if (matches.length === 3)
-            setValues({
-                ...values,
-                project: matches[2]
-            });
+    const handleRequestorInputFieldChange = (e, newVal) => {
+        setRequestorInputFieldValue(newVal);
+        setValues({
+            ...values,
+            accessRequestedFor: newVal
+        });
+    }
+
+    const handleProjectChange = (e, newVal) => {
+        setValues({
+            ...values,
+            project: newVal?.project._id || ''
+        });
     }
 
     return (
@@ -147,6 +152,8 @@ function CreateAccessRequest() {
                     onOpen={() => setOptionsOpen({ ...optionsOpen, requestor: true})}
                     onClose={() => setOptionsOpen({ ...optionsOpen, requestor: false})}
                     onChange={handleRequestorChange}
+                    inputValue={requestorInputFieldValue}
+                    onInputChange={handleRequestorInputFieldChange}
                     options={users}
                     loading={optionsLoading.requestor}
                     isOptionEqualToValue={(option, value) => option._id === value._id}

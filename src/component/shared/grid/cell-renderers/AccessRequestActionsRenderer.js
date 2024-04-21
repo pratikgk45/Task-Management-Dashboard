@@ -62,7 +62,7 @@ function AccessRequestActionsRenderer(params) {
         });
         const { data, error } = await updateAccessRequest(params.data._id, {
             status: action
-        }, user.token);
+        });
         if (error) {
             dispatch(updateNotificationState({
                 isOpen: true,
@@ -80,6 +80,7 @@ function AccessRequestActionsRenderer(params) {
             ...loading,
             state: false
         });
+        params.cb();
     }
 
     const isAllowed = (action) => {
@@ -96,11 +97,11 @@ function AccessRequestActionsRenderer(params) {
                         {
                             isAllowedToEdit() ? 
                                 <Tooltip
-                                    title="Edit Project Details"
+                                    title="Edit Access Request"
                                     arrow
                                 >
                                     <IconButton
-                                        onClick={() => dispatch(updatePopUpState({ editAccessRequest: params.data._id }))}
+                                        // onClick={() => dispatch(updatePopUpState({ editAccessRequest: params.data._id }))}
                                     >
                                         <EditOutlinedIcon />
                                     </IconButton>
@@ -182,6 +183,7 @@ function AccessRequestActionsRenderer(params) {
             >
                 <EditAccessRequest 
                     request={params.data}
+                    cb={params.cb}
                 />
             </Popup>
         </div>
