@@ -47,7 +47,8 @@ function SignUp() {
         setLoading(true);
         e.preventDefault();
         const user = {
-            ...values
+            ...values,
+            age: +values.age
         };
         delete user.confirm_password;
         const { data, error } = await signUp(user);
