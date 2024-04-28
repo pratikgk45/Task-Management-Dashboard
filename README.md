@@ -1,5 +1,7 @@
 # Task Management Dashboard (Frontend)
 
+The deployed version can be found [here](https://task-management-dashboard-v0.vercel.app).
+
 [Backend API repository](https://github.com/pratikgk45/Task-Management-Dashboard-API)
 
 ##### Supported features:
